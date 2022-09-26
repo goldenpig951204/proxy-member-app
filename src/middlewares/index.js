@@ -17,7 +17,7 @@ const proxyModel = require("../models/proxy");
 const domainOverviewModel = require("../models/domainOverview");
 const keywordOverviewModel = require("../models/keywordOverview");
 
-const sessoionMapper = new Mapper();
+const sessionMapper = new Map();
 
 const notFoundMiddleware = (req, res, next) => {
     res.status(404);
@@ -393,36 +393,40 @@ const spyfuLimitMiddleware = async (req, res, next) => {
 
 const applyMiddleware = async (req, res, next) => {
     let domain = req.headers["host"];
-    domain = "sem.zeusserver.link";
     let setting = await settingModel.findOne();
+    domain = "spy.zeusserver.link"
     let proxy = await proxyModel.findOne({domain});
-    if (proxy) {
-        let prefix = (typeof req.cookies.prefix == "undefined" || req.cookies.prefix == "") ? "www" : req.cookies.prefix;
-        req.proxy = {
-            prefix,
-            cookie: setting[`${proxy.type}Cookie`]
-        }
-        if (proxy.type == "semrush") {
-            let result = await semrushLimitMiddleware(req, res);
-            if (result.next) {
-                return semrushMiddleware(prefix)(req, res, next);
-            } else {
-                return res.json(result.data);
+    if (proxy !== null) {
+        if (setting != null) {
+            let prefix = (typeof req.cookies.prefix == "undefined" || req.cookies.prefix == "") ? "www" : req.cookies.prefix;
+            req.proxy = {
+                prefix,
+                cookie: setting[`${proxy.type}Cookie`]
             }
-        } else if (proxy.type == "spyfu") {
-            let result = await spyfuLimitMiddleware(req, res);
-            if (result.next) {
-                return spyfuMiddleware(prefix)(req, res, next);
-            } else {
-                if (result.redirect) {
-                    return res.status(301).redirect(result.path);
+            if (proxy.type == "semrush") {
+                let result = await semrushLimitMiddleware(req, res);
+                if (result.next) {
+                    return semrushMiddleware(prefix)(req, res, next);
                 } else {
                     return res.json(result.data);
                 }
+            } else if (proxy.type == "spyfu") {
+                let result = await spyfuLimitMiddleware(req, res);
+                if (result.next) {
+                    return spyfuMiddleware(prefix)(req, res, next);
+                } else {
+                    if (result.redirect) {
+                        return res.status(301).redirect(result.path);
+                    } else {
+                        return res.json(result.data);
+                    }
+                }
             }
+        } else {
+            return res.render("warning", { msg: "Admin have to set up some proxy-related setting."});
         }
     } else {
-        return res.render("domain_not_found");
+        return res.render("warning", {msg: "The domain is not registered in our application."});
     }
 }
 
