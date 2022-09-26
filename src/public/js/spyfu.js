@@ -7,7 +7,7 @@ $(document).ready(function() {
     }, 3000);
     
 
-    $(document).on("click", ".search-button", function() {
+    $(document).on("click", ".search-button", function(event) {
         let classList = $(".sf-international-search .flag-icon").attr("class");
         let prefix = "";
         if (classList.includes("flag-icon-us")) {
@@ -40,6 +40,8 @@ $(document).ready(function() {
             prefix = "www-es";
         }
         if (locale !== prefix) {
+            event.preventDefault();
+            event.stopPropagation();
             prevUrl = window.location.href;
             window.location.href = `/lang/spyfu?prefix=${prefix}&prev_url=${prevUrl}`;
         }
