@@ -394,7 +394,6 @@ const spyfuLimitMiddleware = async (req, res, next) => {
 const applyMiddleware = async (req, res, next) => {
     let domain = req.headers["host"];
     let setting = await settingModel.findOne();
-    domain = "spy.zeusserver.link"
     let proxy = await proxyModel.findOne({domain});
     if (proxy !== null) {
         if (setting != null) {
